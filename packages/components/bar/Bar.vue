@@ -22,12 +22,10 @@ import {
 } from 'echarts/components'
 
 import useTheme from '../../hooks/useTheme'
+import { unique } from '../../utils'
 import { THEME } from '../../constants/theme'
 import { SIZE } from '../../constants/size'
 import { DIRECTION } from '../../constants/direction'
-
-// withDefault暂不支持t引入外部interface
-// import type { Props } from './data'
 
 import type { ThemeMode, Theme } from '../../types/theme'
 import type { SizeObject } from '../../types/size'
@@ -37,6 +35,11 @@ interface LoadingOptions {
   color: string
   text: string
   [propName: string]: any
+}
+
+interface SeriesOptions {
+  data: (number | string)[]
+  yAxisIndex: number
 }
 
 interface Props {
@@ -49,7 +52,7 @@ interface Props {
   themeMode?: ThemeMode
   legendData?: string[]
   xAxisData?: (string | number)[]
-  seriesData?: (string | number)[][]
+  series: SeriesOptions[]
 }
 
 use([CanvasRenderer, BarChart, TitleComponent, TooltipComponent, LegendComponent, GridComponent])
@@ -64,12 +67,12 @@ const props = withDefaults(defineProps<Props>(), {
   themeMode: 'light',
   legendData: () => [],
   xAxisData: () => [],
-  seriesData: () => [[]],
+  series: () => [],
 })
 
 const chartRef = ref<HTMLElement | null>(null)
 
-const { title, legendData, xAxisData, seriesData, themeMode, theme } = props
+const { title, legendData, xAxisData, themeMode, theme, series } = props
 
 provide(THEME_KEY, props.themeMode)
 
@@ -107,13 +110,28 @@ const option = ref<any>({
   xAxis: {
     type: 'category',
   },
-  yAxis: {
-    type: 'value',
-  },
+  yAxis: [
+    {
+      type: 'value',
+    },
+  ],
   series: [],
 })
 
-const setupYAxis = () => {}
+const setupYAxis = () => {
+  const tempArr = unique(series.map(item => item.yAxisIndex))
+
+  if (tempArr.length > 1) {
+    option.value.yAxis = [
+      {
+        type: 'value',
+      },
+      {
+        type: 'value',
+      },
+    ]
+  }
+}
 
 const setupXAxis = () => {
   option.value.xAxis.data = xAxisData
@@ -126,7 +144,7 @@ const setupLegend = () => {
 const setupSeries = () => {
   option.value.series = []
 
-  seriesData?.forEach((item: any, index: number) => {
+  series?.forEach((item: any, index: number) => {
     option.value.series.push({
       name: legendData[index],
       nameStyle: {
@@ -138,10 +156,9 @@ const setupSeries = () => {
       smooth: true,
       // barGap: '10%',
       // barCategoryGap: this.barCategoryGap,
-      // barWidth: this.isScale ? null : 27,
-      barWidth: SIZE.barWidth ?? null,
+      barWidth: SIZE.barWidth === 0 ? null : SIZE.barWidth,
       showAllSymbol: false,
-      // yAxisIndex: item.yAxisIndex ? item.yAxisIndex : null,
+      yAxisIndex: item.yAxisIndex ? item.yAxisIndex : null,
       areaStyle: {},
       itemStyle: {
         barBorderRadius: SIZE.barBorderRadius,
@@ -164,7 +181,7 @@ const setupSeries = () => {
           },
         },
       },
-      data: item,
+      data: item.data,
       emphasis: {
         itemStyle: {
           shadowBlur: 10,
@@ -177,9 +194,8 @@ const setupSeries = () => {
 }
 
 const updateChart = () => {
-  // option.value.title.text = props.title
-
   setupXAxis()
+  setupYAxis()
   setupSeries()
 }
 

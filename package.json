@@ -1,14 +1,15 @@
 {
   "name": "litecharts",
   "private": false,
-  "version": "0.0.0-beta.2",
+  "version": "0.0.0-beta.3",
   "license": "MIT",
   "author": "Lantz<lantzshaw@gmail.com>",
   "description": "A simple charts based on vue-echarts",
   "files": [
-    "lib"
+    "lib",
+    "types"
   ],
-  "typings": "./types/index.d.ts",
+  "typings": "./types",
   "main": "./lib/bundle.umd.js",
   "source": "components/index.ts",
   "module": "./lib/bundle.es.js",
